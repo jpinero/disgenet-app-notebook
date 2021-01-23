@@ -1,10 +1,11 @@
 ---
-title: "DisGeNET and RCy3"
-authors: "Janet Piñero, Laura I. Furlong"
-date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"      
+title: "DisGeNET Cytoscape App"
+author: "Janet Piñero, Laura I. Furlong"
+date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"  
 output:
   html_document:
     toc: true
+    toc_float: false
     fig_caption: true
 ---
 
@@ -12,10 +13,9 @@ output:
 knitr::opts_chunk$set(
   eval=TRUE
 )
+
 ```
-
-
-*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub](https://github.com/jpinero/disgenet-app-notebook/blob/main/DisGeNET_App.Rmd).*
+*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub]https://github.com/jpinero/disgenet-app-notebook/blob/main/DisGeNET_App.Rmd).*
 
 <hr />
 

@@ -1,8 +1,7 @@
 ---
 title: "DisGeNET and RCy3"
-author: "janet Piñero (janet.pinero@upf.edu)"
+authors: "Janet Piñero, Laura I. Furlong"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"      
-package: disgenet2r
 output:
   html_document:
     toc: true
@@ -16,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 
-*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub](https://github.com/jpinero/disgenet-app-notebook/DisGeNET_App.Rmd).*
+*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub](https://github.com/jpinero/disgenet-app-notebook/blob/main/DisGeNET_App.Rmd).*
 
 <hr />
 
@@ -215,7 +214,7 @@ We have made the data available with this tutorial. To read the list of variants
 
 ```{r}
 
-variants <-read.csv("data/variants.tsv")
+variants <-read.csv("https://raw.githubusercontent.com/jpinero/disgenet-app-notebook/main/data/variants.tsv")
 variants <- variants$x
 
 ```
@@ -369,7 +368,7 @@ First, load the data into R:
 
 ```{r}
 
-edges <-read.csv("data/variant_gene_network.tsv",sep = "\t")
+edges <-read.csv("https://raw.githubusercontent.com/jpinero/disgenet-app-notebook/main/data/variant_gene_network.tsv",sep = "\t")
 
 ```
 

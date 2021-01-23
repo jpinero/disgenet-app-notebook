@@ -15,9 +15,9 @@ knitr::opts_chunk$set(
 )
 
 ```
-*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub]https://github.com/jpinero/disgenet-app-notebook/blob/main/DisGeNET_App.Rmd).*
-
+*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub](https://github.com/jpinero/disgenet-app-notebook/blob/main/DisGeNET_App.Rmd).*
 <hr />
+
 
 This tutorial will teach you how to use the [DisGeNET Cytoscape App](http://apps.cytoscape.org/apps/disgenetapp) to retrieve data from [DisGeNET](https://www.disgenet.org/) [1].
 
@@ -222,7 +222,7 @@ variants <- variants$x
 There are  `r length(variants)` variants in total
 
 
-# create a VDA network associated to a list of variants 
+# Create a VDA network associated to a list of variants 
 
 We will create the network of the variants from the GWAS study that are already described as related to asthma. 
 

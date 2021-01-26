@@ -1,6 +1,6 @@
 ---
 title: "DisGeNET Cytoscape App"
-author: "Janet Piñero, Laura I. Furlong"
+author: "Janet Piñero, Josep Saüch & Laura I. Furlong"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"  
 output:
   html_document:

@@ -341,7 +341,7 @@ layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLengt
 ![](data/img/figure5_variants_vdas_resp.png){width=100%}
 </center>
 
-## Perform enrichment analysis
+## Perform a disease enrichment analyses on a list of variants or genes   
 
 
 **Perform a variant enrichment analysis**

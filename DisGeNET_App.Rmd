@@ -1,12 +1,15 @@
 ---
 title: "DisGeNET Cytoscape App"
 author: "Janet Piñero, Josep Saüch & Laura I. Furlong"
-date: "Last update: `r format(Sys.time())`"  
+date: 'Last update: `r format(Sys.time())`'
 output:
   html_document:
-    toc: true
-    toc_float: false
-    fig_caption: true
+    toc: yes
+    toc_float: no
+    fig_caption: yes
+  word_document:
+    toc: yes
+always_allow_html: true
 ---
 
 ```{r, echo = FALSE}
@@ -83,7 +86,7 @@ We will create an object for the REST calls to the DisGeNET automation module. T
 
 
 - *netType*: A string containing the type of the network to be created (*gene-disease-net*,*variant-disease-net*, *gene-enrichment*, *variant-enrichment*, etc)
-- *host*: The host of the url, by default localhost.  
+- *host*: The host of the url.  
 - *port*: The listening port, by default 1234. 
 - *version*: The version of the automation module, by default v7.  
 
@@ -91,7 +94,7 @@ The function returns a string in url format (*url*), with the given parameters.
 
 ```{r}
 
-disgenetRestUrl<-function(netType,host="localhost",port=1234,version="v7"){
+disgenetRestUrl<-function(netType,host="127.0.0.1",port=1234,version="v7"){
   if(is.null(netType)){
     print("Network type not specified.")
   }else{

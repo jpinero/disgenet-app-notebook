@@ -474,7 +474,7 @@ The p-values resulting from the multiple Fisher tests are corrected for false di
 
 
 ```{r}
-
+library(dplyr)
 getTableColumnNames(table = "node", network = suid)
 genDisEnrichParams <- list(
   networkId = suid,
@@ -485,7 +485,7 @@ genDisEnrichParams <- list(
 )
 
 gda_enrich_result <- disgenetRestCall("gene-enrichment",genDisEnrichParams)
-top_nodes <- getTableColumns('node')
+top_nodes <- getTableColumns('node', network = gda_enrich_result$result$newNetworkProperties$SUID)
 
 top_nodes  <- top_nodes %>% filter(nrAssociatedGenes>4) %>%  arrange(desc(nrAssociatedGenes)) %>% select(diseaseId, diseaseName, nrAssociatedGenes)
 datatable(top_nodes, caption = "Table 3: Top diseases resulting from the variant enrichment" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',

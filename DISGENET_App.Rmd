@@ -1,0 +1,414 @@
+---
+title: "DISGENET Cytoscape App"
+author: "Amelia Martinez, Janet Piñero & Laura I. Furlong"
+date: 'Last update: `r format(Sys.time())`'
+output:
+  html_document:
+    toc: yes
+    toc_float: no
+    fig_caption: yes 
+    number_sections: true
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  eval=TRUE
+)
+
+
+htmltools::img(src = knitr::image_uri(file.path("/home/janet/Documents/disgenet-app-notebook/images/", "logo.jpg")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; width:300px; height:100px;'
+)
+```
+
+
+*The R markdown is available from the pulldown menu for* Code *at the upper-right, choose "Download Rmd", or [download the Rmd from GitHub](https://github.com/jpinero/disgenet-app-notebook/blob/main/DISGENET_App.Rmd).*
+<hr /> 
+
+# Introduction 
+
+This tutorial will teach you how to use the [DISGENET Cytoscape App](http://apps.cytoscape.org/apps/disgenetapp) to retrieve data from [DISGENET](https://www.disgenet.com/) [1] using the R programming language. To run this tutorial, you need to register for a free trial account at [DISGENET](https://www.disgenet.com/), and retrieve you API 
+
+Once you have completed the registration process, go to your user profile...
+
+```{r, echo=FALSE, out.width="130%"}
+knitr::include_graphics("images/profile.png")
+```
+
+... and retrieve your API key
+
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("images/user_api_key.png")
+```
+
+Copy your API key, and go to the Cytoscape Apps menu, click on DISGENET -> Set API key, and paste it. You would need to do this process just the first time. 
+
+
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("images/cytoscape.png")
+```
+
+
+**About DISGENET**  
+
+DISGENET is a discovery platform containing one of the largest publicly available collections of genes and variants associated with human diseases [1]. DISGENET integrates data from expert curated repositories, Clinical trials, GWAS catalogs, animal models and the biomedical literature. The data in the platform are homogeneously annotated with controlled vocabularies and community-driven ontologies. Additionally, several original metrics are provided to assist the prioritization of genotype–phenotype relationships. More information on the database contents, statistics and attributes is available at  [https://www.disgenet.com](https://www.disgenet.com).
+
+**Requirements**
+
+To run the tutorial you will need to install **RCy3**:
+
+```{r, eval = T}
+if(!"RCy3" %in% installed.packages()){
+    if (!requireNamespace("BiocManager", quietly=TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("RCy3")
+}
+library(RCy3)
+
+```
+
+
+You will also need to install and launch Cytoscape:
+
+* Download the latest [Cytoscape](https://cytoscape.org/download.html)
+* Complete the installation wizard
+* Launch Cytoscape
+
+
+Finally, install the DISGENET App to access DISGENET from within Cytoscape. This can be done from the [Cytoscape App Store](http://apps.cytoscape.org/apps/disgenetapp).  
+
+Then, install and load the library *httr*
+
+
+```{r, eval=T}
+if (!requireNamespace("httr", quietly = TRUE)) {
+  install.packages("httr")
+}
+library(httr)
+```
+
+# Tutorial 
+
+This tutorial will guide you on how to use the [DISGENET Cytoscape App](http://apps.cytoscape.org/apps/disgenetapp) to:  
+   
+* Create a GDA network associated to a disease (using disease identifiers or strings as search input)  
+* Create a GDA network associated to a list of genes   
+* Create a VDA network associated to a list of diseases 
+* Create a VDA network associated to a list of variants   
+
+We will create an object for the REST calls to the DISGENET automation module. The parameters are:
+
+
+- *netType*: A string containing the type of the network to be created (*gene-disease-net*,*variant-disease-net*, *gene-enrichment*, *variant-enrichment*, etc)
+- *host*: The host of the url.  
+- *port*: The listening port, by default 1234. 
+- *version*: The version of the automation module, by default v8.  
+
+The function returns a string in url format (*url*), with the given parameters.
+
+```{r, eval = T}
+
+disgenetRestUrl<-function(netType,host="127.0.0.1",port=1234,version="v8"){
+  if(is.null(netType)){
+    print("Network type not specified.")
+  }else{
+    url<-sprintf("http://%s:%i/disgenet/%s/%s",host,port,version,netType)
+  }
+  return (url)
+}
+
+# Creating the url for GDAs
+disgenetRestUrl(netType = "gene-disease-net")
+
+```
+
+Next, we will create an object that will execute the REST calls to the DISGENET automation module in Cytoscape and retrieve the operation results. The parameters are: 
+
+- *netType*: A string containing the type of the network to be created (*gene-disease-net*,*variant-disease-net*)
+- *netParams*: A list with the parameters to create the network.
+
+The function returns the object *result*, a list with the results of the operation.
+
+```{r, eval = T}
+
+disgenetRestCall<-function(netType,netParams){
+  url<-disgenetRestUrl(netType)
+  restCall<-POST(url, body = netParams, encode = "json")
+  result<-content(restCall,"parsed")
+  return(result)
+}
+```
+
+
+## Create a GDA network associated to a disease  
+
+
+In this example, we will create a gene-disease network for Asthma (Concept `C0004096`) using the CURATED data in DISGENET. Below, an example of the object *netParams* to create the GDA network. Notice that we are also filtering by the `DISGENET score` (0.8-1). 
+
+
+```{r, eval = T}
+geneDisParams <- list(
+  source = "CURATED",
+  diseaseSearch = "C0004096",
+  geneSearch = " ",
+  geneProteinClass = "Any",
+  diseaseClass = "Any",
+  initialScoreValue = "0.8",
+  finalScoreValue = "1.0"
+)
+
+# Generate the gene-disease network
+geneDisResult <- disgenetRestCall("gene-disease-net",geneDisParams)
+
+```
+
+The network has now been created in Cytoscape!
+
+To change the layout, run the function *layoutNetwork*. This function receives as an input the network identifier, and a layout name. To investigate the names of the possible layouts, run the function *getLayoutNames()*.
+
+
+```{r, eval = T}
+layoutNetwork("force-directed", network = as.numeric(geneDisResult$result$networkSUID))
+```
+
+You can also change the network title, for example:
+
+```{r, eval = T}
+title <- "my-asthma-GDA-network"
+renameNetwork(title, network =   as.numeric(geneDisResult$result$networkSUID))
+
+```
+
+
+<center>
+![](images/figure1_asthma.png){width=80%}
+</center>
+
+**Create a GDA network associated to a disease using a keyword as input**
+
+In this example, we will create a gene-disease network for the diseases containing the keyword *Asthma* using DISGENET CURATED data. Notice that 3 different concepts related to Asthma subtypes are retrieved. 
+
+
+```{r, eval = T}
+geneDisParams <- list(
+  source = "CURATED",
+  diseaseSearch = "*Asthma*",
+  geneSearch = " ",
+   geneProteinClass = "Any",
+  diseaseClass = "Any",
+  initialScoreValue = "0.5",
+  finalScoreValue = "1.0"
+)
+geneDisResult <- disgenetRestCall("gene-disease-net",geneDisParams)
+layoutNetwork("force-directed", network = geneDisResult$networkResult$networkName)
+
+```
+
+
+<center>
+![](images/figure2_asthma_subtypes.png){width=100%}
+</center>
+
+
+## Create a GDA network associated to a list of genes 
+
+In this example, we will perform a query to DISGENET data (only the `Clinvar` subset) with a list of gehes. The list of genes is separated using *,*, but *;* are also accepted as separators. 
+
+```{r, eval = T}
+
+list <-  c( "PSEN1", "PSEN2", "TARDBP", "PRNP")
+geneDisParams <- list(
+  source = "CLINVAR",
+  geneSearch = paste(list, collapse = ";"),
+  diseaseSearch=  "",
+     geneProteinClass = "Any",
+  diseaseClass = "Any",
+  initialScoreValue = "0",
+  finalScoreValue = "1.0"
+)
+
+geneDisResult <- disgenetRestCall("gene-disease-net",geneDisParams)
+
+```
+ 
+<center>
+![](images/figure3_gda_network.png){width=100%}
+
+
+##  Create a VDA network associated to a list of diseases 
+
+In this example, we will create a VDA network associated to:
+
+- Allergic asthma, C0155877  
+- Adult onset asthma, C0741260   
+- IgE-mediated allergic asthma, C1827849   
+
+```{r, eval = T}
+
+variantDisParams <- list(
+  source= "CURATED",
+  diseaseSearch= "Allergic asthma;Adult onset asthma;IgE-mediated allergic asthma",
+  initialScoreValue= "0.7",
+  finalScoreValue = "1.0",
+  showGenes= "false"
+)
+
+variantDisResult <- disgenetRestCall("variant-disease-net",variantDisParams)
+layoutNetwork("kamada-kawai" , network = variantDisResult$networkResult$networkName)
+
+```
+
+
+<center>
+![](images/figure4_asthma_vdas.png){width=100%} 
+</center>
+
+##  Create a VDA network associated to a list of variants  
+
+
+For the following examples, we will use the [data](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-019-14144-8/MediaObjects/41467_2019_14144_MOESM4_ESM.xlsx) from the publication [Eighty-eight variants highlight the role of T cell regulation and airway remodeling in asthma pathogenesis](https://www.nature.com/articles/s41467-019-14144-8). The publication reports a genome-wide association meta-analysis of 69,189 cases and 702,199 controls from Iceland and UK biobank. They find 88 asthma risk variants at 56 loci.
+
+We have made the data available with this tutorial. To read the list of variants, run
+
+```{r, eval = T}
+
+variants <-read.csv("https://raw.githubusercontent.com/jpinero/disgenet-app-notebook/main/data/variants.tsv")
+variants <- variants$x
+
+```
+
+There are  `r length(variants)` variants in total
+
+**Create a VDA network associated to a list of variants**
+
+We will create the network of all the variants from the GWAS study in DisGeNET. 
+
+```{r, eval = T}
+
+variantDisParams <- list(
+  source= "ALL",
+  variantSearch=  paste(variants, collapse = ","), 
+  initialScoreValue= "0.0",
+  finalScoreValue = "1.0",
+  showGenes= "false"
+)
+
+
+variantDisResult <- disgenetRestCall("variant-disease-net",variantDisParams)
+
+layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLength=10')
+
+# We will store the network identifiers to perform the enrichment later 
+suid <- as.numeric(variantDisResult$result$networkSUID)
+
+```
+<center>
+![](images/figure5_variants_vdas.png){width=100%}</center>
+
+We can retrieve the information associated to the nodes like this: 
+
+```{r, eval = T}
+nodes <-getTableColumns('node')
+
+```
+
+There are  `r length(intersect(variants, nodes$variantId))` variants from the dataset that are reported in DisGeNET, associated to `r length(unique(nodes[!is.na(nodes$diseaseId),]$diseaseId ))` different diseases.
+
+
+```{r, message=F , eval=T}
+library(dplyr)
+library(DT)
+dt  <- nodes %>% filter(nodeType=="disease") %>%  arrange(desc(nrAssociatedVariants)) %>% 
+  select(diseaseId,diseaseName, nrAssociatedVariants) %>% head(20)
+
+datatable(dt, caption = "Table 1: Top diseases associated to the list of variants" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',
+          options = list( pageLength = length(dt$diseaseName),  autoWidth = TRUE,   columnDefs = list(list(width = '100px',  targets = c(0, 1,2))) ))
+
+```
+
+
+We can also check which of the variants from the GWAS study are already described as related to asthma. 
+
+```{r, eval = T}
+
+variantDisParams <- list(
+  source= "ALL",
+  diseaseSearch= "*asthma*",
+  variantSearch=  paste(variants, collapse = ", "), 
+  initialScoreValue= "0.0",
+  finalScoreValue = "1.0",
+  showGenes= "false"
+)
+
+
+variantDisResult <- disgenetRestCall("variant-disease-net",variantDisParams)
+
+layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLength=10')
+
+
+```
+
+
+<center>
+![](images/figure6_variants_vdas_asthma.png){width=100%}
+</center>
+
+
+We can retrieve the information associated to the network edges like this: 
+
+```{r, eval = T}
+edges <-getTableColumns('edge')
+
+```
+
+
+Let's explore the evidence (represented as the edges in the network). We will show only the first 10 rows.
+
+```{r, eval = T}
+dt  <- edges %>% select(score, `evidence index`, `initial year`,  `final year`) %>% arrange(desc(score)) %>% unique() %>% head(10)
+dt$score <- round(dt$score, digits = 2)
+datatable(dt, caption = "Table 2: Details supporting the associations with Asthma" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',
+              options = list(   pageLength = 20, autoWidth = T, 
+                                columnDefs = list(list(width = '100px', targets = c(0, 2)))))
+
+
+```
+
+Next we will create a VDA network for a list of variants filtering by disease class. We will retrieve the network of diseases belonging to the class *Respiratory Tract Diseases* associated to the variants from the GWAS study. This time, we will specify the parameter *showGenes* as true. Notice that the genes annotated to the variants are now shown.
+
+
+```{r, eval = T}
+
+variantDisParams <- list(
+  source= "ALL",
+  diseaseClass= "Respiratory Tract Diseases",
+  variantSearch=  paste(variants, collapse = ", "), 
+  initialScoreValue= "0.0",
+  finalScoreValue = "1.0",
+  showGenes= "true"
+)
+
+
+variantDisResult <- disgenetRestCall("variant-disease-net",variantDisParams)
+layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLength=10')
+
+
+```
+
+
+<center>
+![](images/figure7_variants_vdas_resp.png){width=100%}
+
+</center>
+
+# References
+
+1. Piñero, Janet and Ramírez-Anguita, Juan Manuel and Saüch-Pitarch, Josep and Ronzano, Francesco and Centeno, Emilio, Sanz, Ferran and Furlong, Laura I, {The DisGeNET knowledge platform for disease genomics: 2019 update
+, [Nucleic Acids Research, 48, Issue D1, D845–D85508 (2020)](https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkz1021/5611674) 
+
+2. Olafsdottir, T.A., Theodors, F., Bjarnadottir, K. et al.Eighty-eight variants highlight the role of T cell regulation and airway remodeling in asthma pathogenesis. [Nat Commun 11, 393 (2020).](https://www.nature.com/articles/s41467-019-14144-8) 
+
+
+
+

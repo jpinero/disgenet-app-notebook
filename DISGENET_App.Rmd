@@ -16,8 +16,7 @@ knitr::opts_chunk$set(
 )
 
 
-htmltools::img(src = knitr::image_uri(file.path("/home/janet/Documents/disgenet-app-notebook/images/", "logo.jpg")), 
-               alt = 'logo', 
+htmltools::img(src = knitr::image_uri(file.path("/home/janet/Documents/disgenetplus_v2/disgenet-app-notebook/images/", "logo.jpg")),                alt = 'logo',  
                style = 'position:absolute; top:0; right:0; padding:10px; width:300px; height:100px;'
 )
 ```
@@ -401,6 +400,126 @@ layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLengt
 ![](images/figure7_variants_vdas_resp.png){width=100%}
 
 </center>
+
+
+
+##  Perform a variant enrichment analysis 
+
+\noindent The **variant-enrichment** endpoint receives the identifiers of the network containing the variants of interest, and performs an enrichment analysis over the diseases in DisGeNET. The input list of variants should be identified with DBSNP identifiers. The function has other mandatory arguments: 
+
+
+- *networkId*: SUID of the network
+- *columnName*: the name of the column containing the variants
+- *source*: the source database (by default, `database = “CURATED”`)
+- *pvalueThreshold*: a p-value cutoff to filter the results of the enrichment
+- *minNumberOfVariants*: the minimum number of variants annotated to the disease
+- *newNetwork*: if TRUE, a new network will be created with the results of the enrichment
+
+
+The p-values resulting from the multiple Fisher tests are corrected for false discovery rate using the Benjamini-Hochberg method.
+
+To retrieve the name of the column containing the variants
+
+```{r}
+# this retrieves the name of the columns of the node table of the network 
+colnames(getTableColumns('node', network = suid))
+
+```
+
+To perform the enrichment:
+
+```{r}
+VarDisEnrichParams <- list(
+  networkId = suid,
+  columnName = "variantId",
+  typeId = "DBSNP",  
+  source =  "ALL",
+  pvalueThreshold = 0.05,
+minNumberOfVariants  = 2,
+  newNetwork = "true"
+)
+
+vda_enrich_result <- disgenetRestCall("variant-enrichment",VarDisEnrichParams)
+layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLength=10')
+
+```
+
+
+<center>
+![](data/img/figure8_variant_enrichment.png){width=70%}
+</center>
+
+
+
+## Perform a gene enrichment analysis
+
+To perform a gene enrichment analysis, first it is necessary to create the network containing the genes of interest. We will use as an example the genes associated to the variants from the list of variants of the previous publication.  
+First, load the data into R: 
+
+```{r}
+
+edges <-read.csv("https://raw.githubusercontent.com/jpinero/disgenet-app-notebook/main/data/variant_gene_network.tsv",sep = "\t")
+
+```
+
+There are  `r length(unique(edges$target))` genes in total
+
+Next, we will create the nodes, and edges: 
+
+```{r, message=F}
+nodes <- data.frame( id = c(as.character(edges$target), as.character(edges$source)), 
+                     group = c(rep("gene", length(edges$target)), rep("variant", length(edges$source))) )
+
+
+net_res <- createNetworkFromDataFrames(nodes =nodes, edges = edges, title = "gene-variant-net")
+layoutNetwork('circular')
+setVisualStyle("BioPAX_SIF")
+
+```
+
+Once the network has been created, we will retrieve the network identifier
+
+```{r}
+
+suid <-as.numeric(net_res)
+
+```
+
+
+Now we are ready to perform the enrichment. The **gene-enrichment** endpoint receives an object with the following parameters: 
+ 
+- *networkId*: SUID of the network containing the list of genes of interest
+- *columnName*: the name of the column containing the genes
+- *typeId*: the identifier of the gene: **SYMBOL** for gene symbols, or **ENTREZID** for NCBI Gene Identifiers. 
+- *source*: the source database (by default, `database = “CURATED”`)
+- *pvalueThreshold*: a p-value cutoff to filter the results of the enrichment
+- *minNumberOfGenes*: the minimum number of genes annotated to the disease
+- *newNetwork*: if TRUE, a new network will be created with the results of the enrichment
+
+
+The p-values resulting from the multiple Fisher tests are corrected for false discovery rate using the Benjamini-Hochberg method.
+
+
+```{r}
+
+getTableColumnNames(table = "node", network = suid)
+genDisEnrichParams <- list(
+  networkId = suid,
+  columnName = "id",
+  typeId = "SYMBOL",  
+  source =  "CURATED",
+  newNetwork = "true"
+)
+
+gda_enrich_result <- disgenetRestCall("gene-enrichment",genDisEnrichParams)
+top_nodes <- getTableColumns('node')
+
+top_nodes  <- top_nodes %>% filter(nrAssociatedGenes>4) %>%  arrange(desc(nrAssociatedGenes)) %>% select(diseaseId, diseaseName, nrAssociatedGenes)
+datatable(top_nodes, caption = "Table 3: Top diseases resulting from the variant enrichment" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',
+              options = list(   pageLength = 10, autoWidth = T ))
+
+
+```
 
 # References
 

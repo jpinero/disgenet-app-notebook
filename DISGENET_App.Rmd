@@ -57,7 +57,7 @@ DISGENET is a discovery platform containing one of the largest publicly availabl
 
 To run the tutorial you will need to install **RCy3**:
 
-```{r, eval = T}
+```{r, eval = T, warning=FALSE}
 if(!"RCy3" %in% installed.packages()){
     if (!requireNamespace("BiocManager", quietly=TRUE))
         install.packages("BiocManager")
@@ -80,11 +80,18 @@ Finally, install the DISGENET App to access DISGENET from within Cytoscape. This
 Then, install and load the library *httr*
 
 
-```{r, eval=T}
+```{r, eval=T, warning=FALSE}
 if (!requireNamespace("httr", quietly = TRUE)) {
   install.packages("httr")
 }
 library(httr)
+```
+
+Load other necessary libraries. 
+
+```{r, warning=FALSE}
+library(dplyr)
+library(DT)
 ```
 
 # Tutorial 
@@ -316,8 +323,7 @@ There are  `r length(intersect(variants, nodes$variantId))` variants from the da
 
 
 ```{r, message=F , eval=T}
-library(dplyr)
-library(DT)
+
 dt  <- nodes %>% filter(nodeType=="disease") %>%  arrange(desc(nrAssociatedVariants)) %>% 
   select(diseaseId,diseaseName, nrAssociatedVariants) %>% head(20)
 
@@ -435,7 +441,7 @@ VarDisEnrichParams <- list(
   typeId = "DBSNP",  
   source =  "ALL",
   pvalueThreshold = 0.05,
-minNumberOfVariants  = 2,
+minNumberOfVariants  = 25,
   newNetwork = "true"
 )
 
@@ -446,7 +452,7 @@ layoutNetwork('force-directed defaultSpringCoefficient=0.0001 defaultSpringLengt
 
 
 <center>
-![](data/img/figure8_variant_enrichment.png){width=70%}
+![](images/figure8_variant_enrichment.png){width=70%}
 </center>
 
 
@@ -508,15 +514,24 @@ genDisEnrichParams <- list(
   columnName = "id",
   typeId = "SYMBOL",  
   source =  "CURATED",
+    pvalueThreshold = 0.05,
+  minNumberOfGenes  = 5,
   newNetwork = "true"
 )
 
 gda_enrich_result <- disgenetRestCall("gene-enrichment",genDisEnrichParams)
-top_nodes <- getTableColumns('node')
+print(gda_enrich_result)
+```
 
-top_nodes  <- top_nodes %>% filter(nrAssociatedGenes>4) %>%  arrange(desc(nrAssociatedGenes)) %>% select(diseaseId, diseaseName, nrAssociatedGenes)
-datatable(top_nodes, caption = "Table 3: Top diseases resulting from the variant enrichment" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',
-              options = list(   pageLength = 10, autoWidth = T ))
+
+```{r}
+# top_nodes <- getTableColumns('node')
+# print(top_nodes)
+
+
+# top_nodes  <- top_nodes %>% filter(nrAssociatedGenes>4) %>%  arrange(desc(nrAssociatedGenes)) %>% select(diseaseId, diseaseName, nrAssociatedGenes)
+# datatable(top_nodes, caption = "Table 3: Top diseases resulting from the variant enrichment" ,  rownames = FALSE, class = 'cell-border stripe', filter = 'top',
+#               options = list(   pageLength = 10, autoWidth = T ))
 
 
 ```
